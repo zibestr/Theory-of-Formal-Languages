@@ -39,18 +39,21 @@ class Parser:
             try:
                 while self.tokens.inspect() != const.CLOSE_BRACE:
                     if self.is_D():
-                        self.D()
+                        self.rule_D()
                     else:
-                        self.O()
+                        self.rule_O()
             except IndexError:
-                raise exc.ProgramSyntaxError("Expected a delimiter \"}\" at ending of program")
+                raise exc.ProgramSyntaxError("Expected a delimiter \"}\" at "
+                                             "ending of program")
             self.tokens.get()
 
             if not self.tokens.is_empty():
-                raise exc.ProgramSyntaxError("Find a lexem after ending of program")
+                raise exc.ProgramSyntaxError("Find a lexem after ending of "
+                                             "program")
 
         else:
-            raise exc.ProgramSyntaxError("Expected a delimiter \"{\" at beginning of program")
+            raise exc.ProgramSyntaxError("Expected a delimiter \"{\" at "
+                                         "beginning of program")
 
     # description grammar rules
     def rule_D(self):
@@ -65,8 +68,9 @@ class Parser:
                 raise exc.DescriptionSyntaxError("Expected a delimiter \":\"")
 
             if self.tokens.get().typ == LexemType.Type:
-                if self.tokens.get() != SEMICOLON:
-                    raise exc.DescriptionSyntaxError("Expected a delimiter \";\"")
+                if self.tokens.get() != const.SEMICOLON:
+                    raise exc.DescriptionSyntaxError("Expected a delimiter "
+                                                     "\";\"")
 
             else:
                 raise exc.DescriptionSyntaxError("Expected a type")
@@ -77,7 +81,7 @@ class Parser:
     # operator grammar rules
     def rule_O(self):
         if self.is_A():
-            self.A()
+            self.rule_A()
             self.check_semicolon()
 
         elif self.tokens.inspect().typ == LexemType.KeyWord:
@@ -85,116 +89,125 @@ class Parser:
 
                 case "begin":
 
-                    self.O()
+                    self.rule_O()
                     while self.tokens.inspect() != const.END:
-                        self.O()
+                        self.rule_O()
 
                         if self.tokens.is_empty():
-                            raise exc.OperatorSyntaxError("Expected a keyword \"end\"")
+                            raise exc.OperatorSyntaxError("Expected a keyword "
+                                                          "\"end\"")
                     self.tokens.get()
                     self.check_semicolon()
 
                 case "if":
 
                     if self.tokens.get() == const.OPEN_BRACKET:
-                        self.E()
+                        self.rule_E()
 
                         if self.tokens.get() == const.CLOSE_BRACKET:
-                            self.O()
+                            self.rule_O()
                             if self.tokens.inspect() == const.ELSE:
                                 self.tokens.get()
-                                self.O()
+                                self.rule_O()
                         else:
-                            raise exc.OperatorSyntaxError("Expected a delimiter \")\"")
+                            raise exc.OperatorSyntaxError("Expected a "
+                                                          "delimiter \")\"")
                     else:
-                        raise exc.OperatorSyntaxError("Expected a delimiter \"(\"")
+                        raise exc.OperatorSyntaxError("Expected a delimiter "
+                                                      "\"(\"")
 
                 case "for":
 
                     if self.is_A():
-
-                        self.A()
+                        self.rule_A()
                         if self.tokens.get() == const.TO:
-                            self.E()
+                            self.rule_E()
                         else:
-                            raise exc.OperatorSyntaxError("Expected a keyword \"to\"")
+                            raise exc.OperatorSyntaxError("Expected a keyword "
+                                                          "\"to\"")
 
                     elif self.tokens.get() == const.STEP:
-                        self.E()
+                        self.rule_E()
 
                     else:
-                        raise exc.OperatorSyntaxError("Expected a keyword \"step\" or assigment")
+                        raise exc.OperatorSyntaxError("Expected a keyword "
+                                                      "\"step\" or assigment")
 
-                    self.O()
+                    self.rule_O()
 
                     if self.tokens.get() != const.NEXT:
-                        raise exc.OperatorSyntaxError("Expected a keyword \"next\"")
+                        raise exc.OperatorSyntaxError("Expected a keyword "
+                                                      "\"next\"")
 
                     self.check_semicolon()
 
                 case "while":
 
                     if self.tokens.get() == const.OPEN_BRACKET:
-                        self.E()
+                        self.rule_E()
 
                         if self.tokens.get() == const.CLOSE_BRACKET:
-                            self.O()
+                            self.rule_O()
 
                         else:
-                            raise exc.OperatorSyntaxError("Expected a delimiter \")\"")
+                            raise exc.OperatorSyntaxError("Expected a "
+                                                          "delimiter \")\"")
 
                     else:
-                        raise exc.OperatorSyntaxError("Expected a delimiter \"(\"")
+                        raise exc.OperatorSyntaxError("Expected a delimiter "
+                                                      "\"(\"")
 
                 case "readln":
 
                     if self.tokens.get().typ != LexemType.Identifier:
-                       raise exc.OperatorSyntaxError("Expected a identifier")
+                        raise exc.OperatorSyntaxError("Expected a identifier")
 
                     while self.tokens.inspect() == const.COMMA:
                         self.tokens.get()
 
                         if self.tokens.get().typ != LexemType.Identifier:
-                            raise exc.OperatorSyntaxError("Expected a identifier")
+                            raise exc.OperatorSyntaxError("Expected a "
+                                                          "identifier")
 
                     self.check_semicolon()
 
                 case "writeln":
 
-                    self.E()
+                    self.rule_E()
                     while self.tokens.inspect() == const.COMMA:
-
                         self.tokens.get()
-                        self.E()
+                        self.rule_E()
 
                     self.check_semicolon()
 
         else:
-            raise exc. OperatorSyntaxError("Expected a keyword or identifier")
+            raise exc.OperatorSyntaxError("Expected a keyword or identifier")
 
     def check_semicolon(self):
         if self.tokens.get() != const.SEMICOLON:
-            raise exc.OperatorSyntaxError("Expected a delimiter \";\" at the end of line")
+            raise exc.OperatorSyntaxError("Expected a delimiter \";\" at the "
+                                          "end of line")
 
     # assignment grammar rules
     def rule_A(self):
         if self.tokens.get().typ == LexemType.Identifier:
             if self.tokens.get().typ == LexemType.Assigment:
-                self.E()
+                self.rule_E()
 
             else:
-                raise exc.AssigmentSyntaxError("Expected an assignment operator")
+                raise exc.AssigmentSyntaxError("Expected an assignment "
+                                               "operator")
 
         else:
             raise exc.AssigmentSyntaxError("Expected a identifier")
 
     # expression grammar rules
     def rule_E(self):
-        self.C()
+        self.rule_C()
 
         while self.is_Q():
             self.tokens.get()
-            self.C()
+            self.rule_C()
 
     # operand grammar rules
     def rule_C(self):
@@ -202,7 +215,7 @@ class Parser:
 
         while self.is_P():
             self.tokens.get()
-            self.F()
+            self.rule_F()
 
     # term grammar rules
     def rule_F(self):
@@ -213,10 +226,10 @@ class Parser:
             self.rule_M()
 
     # factor grammar rules
-    def M(self):
+    def rule_M(self):
         if self.tokens.inspect() == const.OPEN_BRACKET:
             self.tokens.get()
-            self.E()
+            self.rule_E()
 
             if self.tokens.get() != const.CLOSE_BRACKET:
                 raise exc.ExpressionSyntaxError("Expected a delimiter \")\"")
@@ -228,7 +241,7 @@ class Parser:
 
         elif self.tokens.inspect().typ == LexemType.UnaryOperator:
             self.tokens.get()
-            self.M()
+            self.rule_M()
 
         else:
             raise exc.ExpressionSyntaxError("Wrong expression syntax")
